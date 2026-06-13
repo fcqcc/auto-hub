@@ -20,6 +20,3 @@ debug_*.py
 
 # Data (keep .gitkeep, not actual db)
 *.db
-
-# Personal info
-AGENTS.md
