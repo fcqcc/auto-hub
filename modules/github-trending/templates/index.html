@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开源趋势 · GitHub & Gitee</title>
+<style>
+:root {
+  --bg-body: #0a0e14; --bg-sidebar: #0f1319;
+  --bg-card: rgba(22, 28, 36, 0.85); --bg-card-hover: rgba(28, 35, 45, 0.95);
+  --border: rgba(48, 60, 75, 0.4); --border-hover: rgba(233, 127, 74, 0.25);
+  --accent: #E97F4A; --accent-glow: rgba(233, 127, 74, 0.15);
+  --accent-muted: rgba(233, 127, 74, 0.08);
+  --text-primary: #e6edf3; --text-secondary: #8b949e; --text-muted: #484f58;
+  --green: #3fb950; --green-glow: rgba(63, 185, 80, 0.15); --red: #f85149;
+  --radius: 12px; --radius-sm: 8px; --sidebar-w: 300px; --header-h: 56px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-body); color: var(--text-primary); min-height: 100vh;
+}
+.header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  background: rgba(10, 14, 20, 0.85); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 24px; z-index: 100;
+}
+.header h1 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.header h1 span { color: var(--text-secondary); font-weight: 400; }
+.header .logo { fill: var(--accent); }
+.header .update-info { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+.layout { display: flex; margin-top: var(--header-h); min-height: calc(100vh - var(--header-h)); }
+
+/* ── 侧边栏 ── */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-sidebar); border-right: 1px solid var(--border);
+  padding: 16px; overflow-y: auto;
+  height: calc(100vh - var(--header-h)); position: sticky; top: var(--header-h);
+}
+.sidebar-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+.sidebar-subtitle { font-size: 10px; color: var(--text-muted); margin-bottom: 12px; }
+.sidebar-item {
+  display: flex; align-items: center; padding: 7px 10px;
+  border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s;
+  gap: 8px; text-decoration: none; color: inherit;
+}
+.sidebar-item:hover { background: var(--accent-muted); }
+.sidebar-item .rank {
+  font-size: 11px; font-weight: 700; width: 18px; text-align: center;
+  color: var(--text-muted); flex-shrink: 0; font-variant-numeric: tabular-nums;
+}
+.sidebar-item .rank.top3 { color: var(--accent); }
+.sidebar-item .name {
+  font-size: 12px; font-weight: 500; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sidebar-item .lang-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sidebar-item .badge {
+  font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 8px; flex-shrink: 0;
+}
+.sidebar-item .badge.growth { background: var(--green-glow); color: var(--green); }
+.sidebar-item .badge.stars { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.source-tag {
+  font-size: 9px; padding: 2px 5px; border-radius: 4px; font-weight: 600; flex-shrink: 0;
+}
+.source-tag.github { background: rgba(255,255,255,0.08); color: #e6edf3; border: 1px solid rgba(255,255,255,0.1); }
+.source-tag.gitee { background: rgba(199,29,35,0.15); color: #ff6b6b; border: 1px solid rgba(199,29,35,0.2); }
+
+/* ── 主内容 ── */
+.main { flex: 1; padding: 24px 32px; min-width: 0; }
+
+/* 排序模式说明条 */
+.mode-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 20px; padding: 10px 14px;
+  background: var(--accent-muted); border-radius: var(--radius-sm);
+  font-size: 12px; color: var(--accent); border: 1px solid var(--border-hover);
+}
+.mode-bar .mode-icon { font-size: 16px; }
+.mode-bar .mode-label { font-weight: 600; }
+.mode-bar .mode-desc { color: var(--text-secondary); margin-left: auto; }
+
+/* 时间/类型切换 */
+.switch-bar {
+  display: flex; gap: 4px; margin-bottom: 16px;
+  background: rgba(255,255,255,0.03); padding: 4px;
+  border-radius: var(--radius); border: 1px solid var(--border);
+  width: fit-content;
+}
+.switch-btn {
+  padding: 7px 20px; border: none; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: all 0.2s; background: transparent; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 4px;
+}
+.switch-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+.switch-btn.active { background: var(--accent); color: #fff; font-weight: 600; }
+.switch-btn .key { font-size: 10px; opacity: 0.6; font-weight: 400; }
+
+/* 分类 pills */
+.category-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+.cat-pill {
+  padding: 5px 14px; border: 1px solid var(--border); border-radius: 20px;
+  font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+  background: transparent; color: var(--text-secondary); white-space: nowrap;
+}
+.cat-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.cat-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.cat-pill .count { font-size: 10px; opacity: 0.7; margin-left: 3px; }
+
+/* 统计卡 */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+.stat-card .icon { font-size: 22px; }
+.stat-card .info { }
+.stat-card .val { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+.stat-card .lbl { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* 卡片网格 */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+
+/* 卡片 */
+.trending-card {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 18px 20px 14px; border: 1px solid var(--border);
+  transition: all 0.2s; position: relative; overflow: hidden;
+}
+.trending-card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.4;
+}
+.trending-card:hover {
+  border-color: var(--border-hover); background: var(--bg-card-hover); transform: translateY(-1px);
+}
+.trending-card .growth-badge {
+  position: absolute; top: 14px; right: 14px;
+  font-size: 13px; font-weight: 700; padding: 3px 12px; border-radius: 16px;
+  display: flex; align-items: center; gap: 4px; z-index: 1;
+}
+.trending-card .growth-badge.green { background: var(--green-glow); color: var(--green); border: 1px solid rgba(63,185,80,0.2); }
+.trending-card .growth-badge.red { background: rgba(248,81,73,0.12); color: var(--red); border-color: rgba(248,81,73,0.2); }
+.trending-card .growth-badge.gold { background: rgba(245,158,11,0.12); color: #f59e0b; border-color: rgba(245,158,11,0.2); }
+.trending-card .name-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; padding-right: 85px;
+}
+.trending-card .name-row a {
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+  text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.trending-card .name-row a:hover { color: var(--accent); }
+.trending-card .name-row .cat-label {
+  font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 10px;
+  border: 1px solid; flex-shrink: 0; white-space: nowrap;
+}
+.trending-card .desc {
+  font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+  margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.trending-card .meta {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 12px; color: var(--text-muted);
+}
+.trending-card .meta .lang-dot { width: 10px; height: 10px; border-radius: 50%; }
+.trending-card .meta .lang-name { color: var(--text-secondary); }
+.trending-card .meta .stat { display: flex; align-items: center; gap: 4px; }
+.trending-card .meta .stat svg { opacity: 0.5; }
+.trending-card .meta .source-tag {
+  font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600;
+  margin-left: auto; background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border); color: var(--text-secondary);
+}
+.trending-card .growth-bar {
+  height: 3px; border-radius: 2px; background: rgba(255,255,255,0.04);
+  margin-top: 8px; overflow: hidden;
+}
+.trending-card .growth-bar .fill {
+  height: 100%; border-radius: 2px; transition: width 0.5s ease;
+}
+
+.lang-JavaScript { background: #f1e05a; } .lang-Python { background: #3572A5; }
+.lang-TypeScript { background: #3178c6; } .lang-Java { background: #b07219; }
+.lang-Go { background: #00ADD8; } .lang-Rust { background: #dea584; }
+.lang-CPP { background: #f34b7d; } .lang-C { background: #555555; }
+.lang-HTML { background: #e34c26; } .lang-CSS { background: #563d7c; }
+.lang-Vue { background: #41b883; } .lang-Swift { background: #F05138; }
+.lang-Kotlin { background: #A97BFF; } .lang-Shell { background: #89e051; }
+.lang-Ruby { background: #701516; } .lang-Default { background: #6e7681; }
+
+.empty-state { text-align: center; padding: 60px; color: var(--text-muted); font-size: 14px; }
+.loading-state, .error-state { text-align: center; padding: 80px 20px; color: var(--text-secondary); }
+.loading-state .spinner {
+  width: 28px; height: 28px; border: 2px solid rgba(233,127,74,0.1);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-state { color: var(--red); }
+
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin: 24px 0 14px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.section-header:first-of-type { margin-top: 0; }
+.section-header .icon { display: flex; align-items: center; }
+.section-header .info {
+  flex: 1;
+}
+.section-header .info h2 { font-size: 15px; font-weight: 600; }
+.section-header .info .sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+.section-header .count-badge {
+  font-size: 11px; color: var(--text-secondary); background: var(--accent-muted);
+  padding: 2px 10px; border-radius: 10px; white-space: nowrap;
+}
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .layout { flex-direction: column; }
+  .main { padding: 14px 16px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .switch-bar { width: 100%; }
+  .switch-btn { flex: 1; text-align: center; }
+  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mode-bar { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>
+    <svg class="logo" width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    开源趋势
+    <span>· GitHub & Gitee</span>
+  </h1>
+  <div class="update-info" id="updateInfo">加载中…</div>
+</div>
+
+<div class="layout">
+  <!-- 侧边栏 -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-title">🏆 排行 TOP 20</div>
+    <div class="sidebar-subtitle" id="sidebarSubtitle">按新增 Star 降序</div>
+    <div id="sidebarList">
+      <div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:12px">加载中…</div>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main">
+    <!-- 模式切换：增长榜 / 总榜 -->
+    <div class="switch-bar" id="switchBar">
+      <button class="switch-btn active" data-mode="growth" onclick="switchMode('growth')">
+        <span>📈 上升榜</span><span class="key">· 按新增 Star</span>
+      </button>
+      <button class="switch-btn" data-mode="alltime" onclick="switchMode('alltime')">
+        <span>🏆 总榜</span><span class="key">· 按 Star 总数</span>
+      </button>
+    </div>
+
+    <!-- 时间范围（仅上升榜显示） -->
+    <div class="switch-bar" id="timeBar">
+      <button class="switch-btn active" data-since="daily" onclick="switchTime('daily')">📅 今日</button>
+      <button class="switch-btn" data-since="weekly" onclick="switchTime('weekly')">📆 本周</button>
+      <button class="switch-btn" data-since="monthly" onclick="switchTime('monthly')">📊 本月</button>
+    </div>
+
+    <!-- 模式说明 -->
+    <div class="mode-bar" id="modeBar">
+      <span class="mode-icon">📈</span>
+      <span class="mode-label">上升榜</span>
+      <span class="mode-desc">按今日新增 Star 数排名，展示近期最受关注的开源项目</span>
+    </div>
+
+    <!-- 分类筛选 -->
+    <div class="category-bar" id="categoryBar">
+      <button class="cat-pill active" data-cat="all" onclick="filterCategory('all')">📋 全部</button>
+    </div>
+
+    <!-- 统计卡 -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><span class="icon">📦</span><div class="info"><div class="val" id="statTotal">—</div><div class="lbl">收录仓库总数</div></div></div>
+      <div class="stat-card"><span class="icon">🔥</span><div class="info"><div class="val" id="statCategory">—</div><div class="lbl">本期最热门分类</div></div></div>
+      <div class="stat-card"><span class="icon">🌐</span><div class="info"><div class="val" id="statSources">—</div><div class="lbl">GitHub · Gitee</div></div></div>
+    </div>
+
+    <!-- 内容区 -->
+    <div id="contentArea">
+      <div class="loading-state"><div class="spinner"></div><div>正在获取趋势数据…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LANG_COLORS = {
+  'JavaScript':'#f1e05a','Python':'#3572A5','TypeScript':'#3178c6',
+  'Java':'#b07219','Go':'#00ADD8','Rust':'#dea584',
+  'C++':'#f34b7d','C':'#555555','HTML':'#e34c26',
+  'CSS':'#563d7c','Vue':'#41b883','Shell':'#89e051',
+  'Swift':'#F05138','Kotlin':'#A97BFF','Ruby':'#701516',
+  'Dart':'#00B4AB','Scala':'#c22d40',
+};
+const GH_SVG = '<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>';
+const FORK_SVG = '<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 4.5a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm8.25-4.5a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm-.5 4.5a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM5 8.5a1.75 1.75 0 00-.5 1.215v.035A2.25 2.25 0 006.25 12h1.06l.47.47v1.28a.75.75 0 001.5 0v-1.28l-.47-.47H6.25a.75.75 0 010-1.5h3.5a.75.75 0 00.75-.75V9.75c0-.464-.184-.91-.513-1.237C9.66 8.184 9.213 8 8.75 8h-3.5a.75.75 0 00-.75.75v.035A1.75 1.75 0 005 8.5z"/></svg>';
+
+function getLangColor(l) { return LANG_COLORS[l] || '#6e7681'; }
+function fmt(n) {
+  if (!n || n === 0) return '0';
+  return n >= 10000 ? (n/10000).toFixed(1)+'k' : n >= 1000 ? (n/1000).toFixed(1)+'k' : n.toLocaleString();
+}
+
+let currentMode = 'growth';   // 'growth' | 'alltime'
+let currentSince = 'daily';   // 'daily' | 'weekly' | 'monthly'
+let currentCategory = 'all';
+let currentData = null;
+
+function switchMode(mode) {
+  currentMode = mode;
+  currentCategory = 'all';
+  // 切换按钮高亮
+  document.querySelectorAll('#switchBar .switch-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  // 时间选择器：总榜隐藏，上升榜显示
+  document.getElementById('timeBar').style.display = mode === 'growth' ? 'flex' : 'none';
+  // 说明条
+  const bar = document.getElementById('modeBar');
+  if (mode === 'growth') {
+    const labels = { daily:'今日', weekly:'本周', monthly:'本月' };
+    bar.innerHTML = `<span class="mode-icon">📈</span><span class="mode-label">${labels[currentSince]}上升榜</span><span class="mode-desc">按${labels[currentSince]}新增 Star 数排名，展示近期最受关注的开源项目</span>`;
+  } else {
+    bar.innerHTML = `<span class="mode-icon">🏆</span><span class="mode-label">总榜</span><span class="mode-desc">按 Star 总数排名，展示全平台最受欢迎的开源项目</span>`;
+  }
+  renderSidebar();
+  renderMain();
+}
+
+function switchTime(since) {
+  currentSince = since;
+  currentCategory = 'all';
+  document.querySelectorAll('#timeBar .switch-btn').forEach(b => b.classList.toggle('active', b.dataset.since === since));
+  // 更新说明条
+  const labels = { daily:'今日', weekly:'本周', monthly:'本月' };
+  document.getElementById('modeBar').innerHTML =
+    `<span class="mode-icon">📈</span><span class="mode-label">${labels[since]}上升榜</span><span class="mode-desc">按${labels[since]}新增 Star 数排名，展示近期最受关注的开源项目</span>`;
+  fetchData();
+}
+
+function filterCategory(cat) {
+  currentCategory = cat;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p.dataset.cat === cat));
+  renderMain();
+}
+
+async function fetchData() {
+  const area = document.getElementById('contentArea');
+  area.innerHTML = `<div class="loading-state"><div class="spinner"></div><div>正在获取数据…</div></div>`;
+  try {
+    const resp = await fetch(`/trending/api/trending/${currentSince}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    currentData = data;
+    document.getElementById('updateInfo').textContent = `更新于 ${data.updated_at}`;
+    renderCategories(data);
+    renderStats(data);
+    renderSidebar();
+    renderMain();
+  } catch (e) {
+    area.innerHTML = `<div class="error-state">⚠️ 数据加载失败：${e.message}</div>`;
+  }
+}
+
+function renderCategories(data) {
+  const cats = data.categories || [];
+  const bar = document.getElementById('categoryBar');
+  let html = `<button class="cat-pill ${currentCategory==='all'?'active':''}" data-cat="all" onclick="filterCategory('all')">📋 全部</button>`;
+  cats.forEach(c => {
+    const a = currentCategory === c.id ? 'active' : '';
+    html += `<button class="cat-pill ${a}" data-cat="${c.id}" onclick="filterCategory('${c.id}')">${c.emoji} ${c.label} <span class="count">${c.count}</span></button>`;
+  });
+  bar.innerHTML = html;
+}
+
+function renderStats(data) {
+  const all = (data.github||[]).concat(data.gitee||[]);
+  document.getElementById('statTotal').textContent = all.length;
+  const cats = data.categories || [];
+  document.getElementById('statCategory').textContent = cats.length > 0 ? cats[0].emoji+' '+cats[0].label : '—';
+  const ghCount = (data.github||[]).length;
+  const gtCount = (data.gitee||[]).length;
+  document.getElementById('statSources').textContent = `${ghCount} · ${gtCount}`;
+}
+
+function renderSidebar() {
+  if (!currentData) return;
+  const all = (currentData.github||[]).concat(currentData.gitee||[]);
+
+  let sorted;
+  if (currentMode === 'growth') {
+    sorted = [...all].sort((a,b) => (b.growth||0) - (a.growth||0));
+  } else {
+    sorted = [...all].sort((a,b) => (b.stars||0) - (a.stars||0));
+  }
+  const top20 = sorted.slice(0, 20);
+
+  document.getElementById('sidebarSubtitle').textContent =
+    currentMode === 'growth' ? `按新增 Star 降序 · ${currentSince==='daily'?'今日':currentSince==='weekly'?'本周':'本月'}` : '按 Star 总数降序';
+
+  const list = document.getElementById('sidebarList');
+  list.innerHTML = top20.map((repo, i) => {
+    const rankClass = i < 3 ? 'top3' : '';
+    const sourceClass = repo.source === 'GitHub' ? 'github' : 'gitee';
+    const val = currentMode === 'growth' ? repo.growth : repo.stars;
+    const badgeClass = currentMode === 'growth' ? 'growth' : 'stars';
+    return `<a class="sidebar-item" href="${repo.url||'#'}" target="_blank">
+      <div class="rank ${rankClass}">${i+1}</div>
+      <span class="source-tag ${sourceClass}">${repo.source==='GitHub'?'GH':'GT'}</span>
+      <div class="name">${repo.name}</div>
+      <div class="lang-dot" style="background:${getLangColor(repo.language)}"></div>
+      <div class="badge ${badgeClass}">${fmt(val)}</div>
+    </a>`;
+  }).join('');
+}
+
+function renderMain() {
+  const area = document.getElementById('contentArea');
+  if (!currentData) return;
+
+  const hasGh = currentData.github && currentData.github.length > 0;
+  const hasGt = currentData.gitee && currentData.gitee.length > 0;
+  if (!hasGh && !hasGt) { area.innerHTML = '<div class="empty-state">暂无数据</div>'; return; }
+
+  const all = (currentData.github||[]).concat(currentData.gitee||[]);
+  const maxGrowth = Math.max(...all.map(r => r.growth||0), 1);
+  const maxStars = Math.max(...all.map(r => r.stars||0), 1);
+
+  const sinceLabels = { daily:'今日', weekly:'本周', monthly:'本月' };
+
+  // 为当前模式选择排序和指标
+  const isGrowth = currentMode === 'growth';
+  const sortKey = isGrowth ? 'growth' : 'stars';
+  const badgeKey = isGrowth ? 'growth' : 'stars';
+  const maxVal = isGrowth ? maxGrowth : maxStars;
+  const sourceLabel = isGrowth ? `${sinceLabels[currentSince]}新增 Star` : 'Star 总数';
+
+  function filterAndSort(repos) {
+    let r = [...repos].sort((a,b) => (b[sortKey]||0) - (a[sortKey]||0));
+    if (currentCategory !== 'all') r = r.filter(x => x.category === currentCategory);
+    return r;
+  }
+
+  let html = '';
+
+  if (hasGh) {
+    const repos = filterAndSort(currentData.github);
+    if (repos.length > 0) {
+      html += `<div class="section-header">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 16 16" fill="#e6edf3"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span>
+        <div class="info"><h2>GitHub ${isGrowth ? '· 上升榜' : '· 总榜'}</h2><div class="sub">共 ${repos.length} 项 · 按 ${sourceLabel} 排序</div></div>
+        <span class="count-badge">📈 ${sourceLabel}</span>
+      </div><div class="card-grid">${repos.map(r => renderCard(r, maxVal, isGrowth)).join('')}</div>`;
+    }
+  }
+
+  if (hasGt) {
+    const repos = filterAndSort(currentData.gitee);
+    if (repos.length > 0) {
+      html += `<div class="section-header">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="#ff6b6b"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2z"/></svg></span>
+        <div class="info"><h2>Gitee ${isGrowth ? '· 上升榜' : '· 总榜'}</h2><div class="sub">共 ${repos.length} 项 · 按 ${sourceLabel} 排序</div></div>
+        <span class="count-badge">📈 ${sourceLabel}</span>
+      </div><div class="card-grid">${repos.map(r => renderCard(r, maxVal, isGrowth)).join('')}</div>`;
+    }
+  }
+
+  if (html === '') html = '<div class="empty-state">该分类无匹配项目</div>';
+  area.innerHTML = html;
+}
+
+function renderCard(repo, maxVal, isGrowth) {
+  const val = repo[isGrowth ? 'growth' : 'stars'] || 0;
+  const pct = Math.min((val / maxVal) * 100, 100);
+  const isHot = val > 500;
+  let badgeClass = 'green';
+  if (isGrowth && isHot) badgeClass = 'red';
+  if (!isGrowth) badgeClass = 'gold';
+
+  const badgeIcon = isGrowth ? '▲' : '⭐';
+  const metaIcon = isGrowth ? GH_SVG : '⭐';
+
+  return `<div class="trending-card">
+    ${val > 0 ? `<div class="growth-badge ${badgeClass}">${badgeIcon} ${fmt(val)}</div>` : ''}
+    <div class="name-row">
+      <a href="${repo.url||'#'}" target="_blank">${repo.name}</a>
+      <span class="cat-label" style="background:${repo.category_color}18;color:${repo.category_color};border-color:${repo.category_color}25">${repo.category_emoji||'📦'} ${repo.category_label||'其他'}</span>
+    </div>
+    <div class="desc">${repo.description_zh||repo.description||'暂无描述'}</div>
+    <div class="meta">
+      ${repo.language ? `<span class="lang-dot" style="background:${getLangColor(repo.language)}"></span><span class="lang-name">${repo.language}</span>` : ''}
+      <span class="stat">${GH_SVG} ${fmt(repo.stars)}</span>
+      ${repo.forks > 0 ? `<span class="stat">${FORK_SVG} ${fmt(repo.forks)}</span>` : ''}
+      <span class="source-tag">${repo.source}</span>
+    </div>
+    ${isGrowth ? `<div class="growth-bar"><div class="fill" style="width:${pct}%;background:${badgeClass==='red'?'var(--red)':'var(--green)'}"></div></div>` : ''}
+  </div>`;
+}
+
+fetchData();
+setInterval(fetchData, 300000);
+</script>
+</body>
+</html>

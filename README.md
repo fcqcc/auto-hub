@@ -103,7 +103,7 @@ cat README.md
 |---|---|---|---|
 | 01 | [Steam 折扣推荐](./modules/steam-deals/) | API 调用型 | ✅ 已完成 |
 | 02 | Steam 好价推送 | RSS 抓取型 | ✅ 已完成 |
-| 03 | GitHub Trending 推送 | API 调用型 | ⏳ 计划中 |
+| 03 | [开源趋势排行榜](./modules/github-trending/) | 爬虫型 + API 调用型 | ✅ 已完成 |
 | 04 | 豆瓣 Top250 监控 | 爬虫型 | ⏳ 计划中 |
 | 05 | 每日邮件汇总 | 邮件型 | ⏳ 计划中 |
 | 06 | Notion 自动备份 | API 调用型 | ⏳ 计划中 |
@@ -140,15 +140,17 @@ auto-hub/
 │
 └── modules/               # 所有自动化项目
     ├── steam-deals/
-    │   ├── app/           # 主应用
-    │   ├── config/        # 配置
-    │   ├── scripts/       # 脚本
-    │   ├── static/        # 静态资源
-    │   ├── docs/          # 项目文档
-    │   ├── README.md      # 项目说明
-    │   ├── openapi.json   # API 文档
-    │   ├── requirements.txt
-    │   └── RAPIDAPI.md
+    │   ├── ...
+    │   └── docs/
+    │
+    ├── github-trending/
+    │   ├── docs/            # 一键指令文档
+    │   ├── scraper.py       # 数据抓取 + 缓存 + 翻译
+    │   ├── app.py           # Flask 后端
+    │   ├── templates/
+    │   │   └── index.html   # 暗色暖橙 UI 前端
+    │   └── requirements.txt
+    │
     └── ... 更多模块
 ```
 
